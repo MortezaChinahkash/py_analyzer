@@ -64,6 +64,12 @@ def print_menu():
         print(f"{Colors.colorize(number, Colors.BOLD + Colors.GREEN)} - {Colors.colorize(title, Colors.BOLD + Colors.WHITE)}")
         print(f"    {Colors.colorize(description, Colors.BLUE)}")
         print()
+    
+    print(Colors.colorize("💡 TIPP:", Colors.BOLD + Colors.CYAN))
+    print(Colors.colorize("• Einzelauswahl: z.B. '1' oder '3'", Colors.CYAN))
+    print(Colors.colorize("• Mehrfachauswahl: z.B. '1,2,4' (mit Komma getrennt)", Colors.CYAN))
+    print(Colors.colorize("• Alle ausführen: '5'", Colors.CYAN))
+    print()
 
 def get_analyzer_info() -> Dict[str, Dict]:
     """Gibt Informationen über alle verfügbaren Analyzer zurück"""
@@ -159,16 +165,74 @@ def run_all_analyzers() -> None:
     
     print()
 
+def run_multiple_analyzers(choices: List[str]) -> None:
+    """Führt mehrere ausgewählte Analyzer nacheinander aus"""
+    analyzers = get_analyzer_info()
+    
+    print(Colors.colorize(f"🔥 MEHRFACHAUSWAHL: {len(choices)} ANALYZER WERDEN AUSGEFÜHRT", Colors.BOLD + Colors.MAGENTA))
+    print(Colors.colorize("=" * 60, Colors.MAGENTA))
+    print()
+    
+    # Zeige alle ausgewählten Analyzer an
+    for choice in choices:
+        info = analyzers[choice]
+        print(f"{Colors.colorize(choice, Colors.BOLD + Colors.GREEN)} - {Colors.colorize(info['name'], Colors.CYAN)}")
+    print()
+    
+    results = []
+    
+    for i, choice in enumerate(choices, 1):
+        info = analyzers[choice]
+        
+        print(Colors.colorize(f"[{i}/{len(choices)}] {info['icon']} {info['name']}", Colors.BOLD + Colors.CYAN))
+        print(Colors.colorize(f"📄 {info['description']}", Colors.BLUE))
+        print()
+        
+        success = run_analyzer(info['script'])
+        results.append((info['name'], success))
+        
+        # Trennlinie zwischen Analyzern (außer beim letzten)
+        if i < len(choices):
+            print()
+            print(Colors.colorize("=" * 60, Colors.YELLOW))
+            print()
+    
+    # Zusammenfassung
+    print()
+    print(Colors.colorize("📊 ZUSAMMENFASSUNG MEHRFACHAUSWAHL", Colors.BOLD + Colors.MAGENTA))
+    print(Colors.colorize("=" * 60, Colors.MAGENTA))
+    
+    for name, success in results:
+        status = "✅ Erfolgreich" if success else "❌ Fehler"
+        color = Colors.GREEN if success else Colors.RED
+        print(f"{Colors.colorize(status, color)} - {name}")
+    
+    print()
+
 def get_user_choice() -> str:
     """Fragt den Benutzer nach seiner Auswahl"""
     while True:
         try:
-            choice = input(Colors.colorize("🔍 Ihre Auswahl (0-5): ", Colors.BOLD + Colors.YELLOW)).strip()
+            choice = input(Colors.colorize("🔍 Ihre Auswahl (0-5 oder mehrere mit Komma): ", Colors.BOLD + Colors.YELLOW)).strip()
             
+            # Einzelauswahl
             if choice in ['0', '1', '2', '3', '4', '5']:
                 return choice
+            
+            # Mehrfachauswahl prüfen
+            if ',' in choice:
+                choices = [c.strip() for c in choice.split(',')]
+                valid_choices = ['1', '2', '3', '4']
+                
+                # Prüfen ob alle Auswahlen gültig sind
+                if all(c in valid_choices for c in choices):
+                    # Duplikate entfernen und sortieren
+                    unique_choices = sorted(list(set(choices)))
+                    return ','.join(unique_choices)
+                else:
+                    print(Colors.colorize("❌ Ungültige Mehrfachauswahl! Nur 1,2,3,4 erlaubt (keine 0 oder 5).", Colors.RED))
             else:
-                print(Colors.colorize("❌ Ungültige Eingabe! Bitte wählen Sie 0-5.", Colors.RED))
+                print(Colors.colorize("❌ Ungültige Eingabe! Bitte wählen Sie 0-5 oder mehrere mit Komma.", Colors.RED))
                 
         except KeyboardInterrupt:
             print(Colors.colorize("\n\n👋 Auf Wiedersehen!", Colors.YELLOW))
@@ -224,7 +288,26 @@ def main():
                 else:
                     print(Colors.colorize("❌ Vorgang abgebrochen.", Colors.YELLOW))
                     
+            elif ',' in choice:
+                # Mehrfachauswahl
+                choices = choice.split(',')
+                analyzers = get_analyzer_info()
+                
+                # Zeige alle ausgewählten Analyzer an
+                print()
+                print(Colors.colorize("🔥 MEHRFACHAUSWAHL:", Colors.BOLD + Colors.CYAN))
+                for c in choices:
+                    print(f"  {c} - {analyzers[c]['name']}")
+                print()
+                
+                if confirm_action(f"{len(choices)} ANALYZER"):
+                    print()
+                    run_multiple_analyzers(choices)
+                else:
+                    print(Colors.colorize("❌ Vorgang abgebrochen.", Colors.YELLOW))
+                    
             else:
+                # Einzelauswahl
                 analyzers = get_analyzer_info()
                 analyzer_info = analyzers[choice]
                 
