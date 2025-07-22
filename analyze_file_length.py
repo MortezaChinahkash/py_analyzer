@@ -16,11 +16,6 @@ class Colors:
     @staticmethod
     def colorize(text: str, color: str) -> str:
         return f"{color}{text}{Colors.RESET}"
-    
-    @staticmethod
-    def colorize_for_file(text: str, color: str) -> str:
-        """Für Dateien ohne ANSI-Codes - nur reiner Text"""
-        return text
 
 def analyze_file_length(file_path):
     """
@@ -160,22 +155,16 @@ def scan_all_files():
     output_lines.append(f"Analyzing {len(files)} files for length > 400 lines...")
     output_lines.append(f"Search directory: {script_dir}")
     
-    # Display file counts by type with colors
-    print(Colors.colorize("FILE LENGTH ANALYSIS REPORT", Colors.BOLD + Colors.CYAN))
-    print(Colors.colorize("=" * 80, Colors.CYAN))
-    print(Colors.colorize(f"Analyzing {len(files)} files for length > 400 lines...", Colors.YELLOW))
-    print(Colors.colorize(f"Search directory: {script_dir}", Colors.BLUE))
-    print()
-    
+    # Display file counts by type
     for file_type, type_files in files_by_type.items():
         if type_files:
             count_msg = f"{file_type} files: {len(type_files)}"
-            print(Colors.colorize(count_msg, Colors.GREEN))
+            print(count_msg)
             output_lines.append(count_msg)
     
     output_lines.append(f"Excluded directories: {', '.join(excluded_dirs)}")
     output_lines.append("")
-    print(Colors.colorize(f"Excluded directories: {', '.join(excluded_dirs)}", Colors.MAGENTA))
+    print(f"Excluded directories: {', '.join(excluded_dirs)}")
     print("")
     
     all_large_files = []
@@ -191,24 +180,16 @@ def scan_all_files():
             file_output = f"File: {file_path}"
             separator = "-" * 80
             
-            print(Colors.colorize(file_output, Colors.BOLD + Colors.YELLOW))
-            print(Colors.colorize(separator, Colors.YELLOW))
+            print(file_output)
+            print(separator)
             output_lines.append(file_output)
             output_lines.append(separator)
             
             details = f"  Type: {file_info['file_type']} | Total lines: {file_info['total_lines']}"
             breakdown = f"  Non-empty: {file_info['non_empty_lines']} | Comments: {file_info['comment_lines']} | JSDoc: {file_info['jsdoc_lines']} | Code: {file_info['code_lines']}"
             
-            # Color coding based on file size
-            if file_info['total_lines'] > 800:
-                print(Colors.colorize(details, Colors.RED))
-                print(Colors.colorize(breakdown, Colors.RED))
-            elif file_info['total_lines'] > 600:
-                print(Colors.colorize(details, Colors.YELLOW))
-                print(Colors.colorize(breakdown, Colors.YELLOW))
-            else:
-                print(Colors.colorize(details, Colors.WHITE))
-                print(Colors.colorize(breakdown, Colors.BLUE))
+            print(details)
+            print(breakdown)
             print("")
             
             output_lines.append(details)
@@ -222,9 +203,9 @@ def scan_all_files():
     top_section = "=" * 80
     top_header = "=== TOP 10 LARGEST FILES ==="
     
-    print(Colors.colorize(top_section, Colors.MAGENTA))
-    print(Colors.colorize(top_header, Colors.BOLD + Colors.MAGENTA))
-    print(Colors.colorize(top_section, Colors.MAGENTA))
+    print(top_section)
+    print(top_header)
+    print(top_section)
     
     output_lines.append(top_section)
     output_lines.append(top_header)
@@ -235,16 +216,9 @@ def scan_all_files():
         type_line = f"    Type: {file_info['file_type']}"
         file_line = f"    File: {file_info['file']}"
         
-        # Color coding for ranking
-        if i < 3:  # Top 3
-            print(Colors.colorize(rank_line, Colors.BOLD + Colors.RED))
-        elif i < 6:  # 4-6
-            print(Colors.colorize(rank_line, Colors.BOLD + Colors.YELLOW))
-        else:  # 7-10
-            print(Colors.colorize(rank_line, Colors.BOLD + Colors.GREEN))
-            
-        print(Colors.colorize(type_line, Colors.CYAN))
-        print(Colors.colorize(file_line, Colors.BLUE))
+        print(rank_line)
+        print(type_line)
+        print(file_line)
         print("")
         
         output_lines.append(rank_line)
@@ -254,7 +228,7 @@ def scan_all_files():
     
     # Summary by file type
     summary_header = "=== SUMMARY BY FILE TYPE ==="
-    print(Colors.colorize(summary_header, Colors.BOLD + Colors.CYAN))
+    print(summary_header)
     output_lines.append(summary_header)
     
     type_summary = {}
@@ -277,11 +251,10 @@ def scan_all_files():
             data = type_summary[file_type]
             avg_lines = data['total_lines'] / data['count']
             type_line = f"{file_type}: {data['count']} files > 400 lines (avg: {avg_lines:.1f}, max: {data['max_lines']})"
-            print(Colors.colorize(type_line, Colors.GREEN))
         else:
             type_line = f"{file_type}: 0 files > 400 lines"
-            print(Colors.colorize(type_line, Colors.BLUE))
         
+        print(type_line)
         output_lines.append(type_line)
     
     # Overall summary
@@ -289,9 +262,9 @@ def scan_all_files():
     files_analyzed = f"Files analyzed: {len(files)}"
     files_over_limit = f"Files over 400 lines: {files_over_400}"
     
-    print(Colors.colorize(overall_header, Colors.BOLD + Colors.YELLOW))
-    print(Colors.colorize(files_analyzed, Colors.WHITE))
-    print(Colors.colorize(files_over_limit, Colors.YELLOW))
+    print(overall_header)
+    print(files_analyzed)
+    print(files_over_limit)
     
     output_lines.append(overall_header)
     output_lines.append(files_analyzed)
@@ -299,7 +272,7 @@ def scan_all_files():
     
     if files_over_400 == 0:
         no_large_files_msg = "No files longer than 400 lines found!"
-        print(Colors.colorize(no_large_files_msg, Colors.BOLD + Colors.GREEN))
+        print(no_large_files_msg)
         output_lines.append(no_large_files_msg)
     else:
         avg_length = sum(f['total_lines'] for f in all_large_files) / len(all_large_files)
@@ -307,8 +280,8 @@ def scan_all_files():
         avg_msg = f"Average length of large files: {avg_length:.1f} lines"
         largest_msg = f"Largest file: {os.path.basename(largest['file'])} ({largest['total_lines']} lines)"
         
-        print(Colors.colorize(avg_msg, Colors.WHITE))
-        print(Colors.colorize(largest_msg, Colors.BOLD + Colors.RED))
+        print(avg_msg)
+        print(largest_msg)
         
         output_lines.append(avg_msg)
         output_lines.append(largest_msg)
@@ -322,11 +295,8 @@ def scan_all_files():
             "• JS/TS files > 400 lines: Split into smaller modules or services"
         ]
         
-        for i, rec in enumerate(recommendations):
-            if i == 0:
-                print(Colors.colorize(rec, Colors.BOLD + Colors.MAGENTA))
-            else:
-                print(Colors.colorize(rec, Colors.CYAN))
+        for rec in recommendations:
+            print(rec)
             output_lines.append(rec)
     
     # Write to file
@@ -334,9 +304,9 @@ def scan_all_files():
     try:
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write('\n'.join(output_lines))
-        print(Colors.colorize(f"\nResults saved to: {output_file}", Colors.BOLD + Colors.GREEN))
+        print(f"\nResults saved to: {output_file}")
     except Exception as e:
-        print(Colors.colorize(f"\nError saving to file: {e}", Colors.RED))
+        print(f"\nError saving to file: {e}")
 
 if __name__ == "__main__":
     scan_all_files()

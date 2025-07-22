@@ -2,27 +2,6 @@ import os
 import re
 import glob
 
-# ANSI Color Codes für farbige Ausgabe
-class Colors:
-    RED = '\033[91m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    BLUE = '\033[94m'
-    MAGENTA = '\033[95m'
-    CYAN = '\033[96m'
-    WHITE = '\033[97m'
-    BOLD = '\033[1m'
-    RESET = '\033[0m'
-    
-    @staticmethod
-    def colorize(text: str, color: str) -> str:
-        return f"{color}{text}{Colors.RESET}"
-    
-    @staticmethod
-    def colorize_for_file(text: str, color: str) -> str:
-        """Für Dateien ohne ANSI-Codes - nur reiner Text"""
-        return text
-
 def analyze_jsdoc_coverage(file_path):
     """
     Analyze JSDoc coverage for methods and functions in TypeScript and JavaScript files
