@@ -1,8 +1,84 @@
 import os
 import glob
 import re
+import shutil
+from datetime import datetime
 
-def remove_console_logs_from_file(file_path):
+# ANSI Color Codes for colored output
+class Colors:
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    WHITE = '\033[97m'
+    BOLD = '\033[1m'
+    RESET = '\033[0m'
+    
+    @staticmethod
+    def colorize(text: str, color: str) -> str:
+        """Colors text"""
+        return f"{color}{text}{Colors.RESET}"
+
+def create_backup_folder():
+    """Creates a backup folder with timestamp"""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_dir = os.path.join(script_dir, "backups", f"console_log_backup_{timestamp}")
+    
+    try:
+        os.makedirs(backup_dir, exist_ok=True)
+        return backup_dir
+    except Exception as e:
+        print(Colors.colorize(f"❌ ERROR: Could not create backup folder: {e}", Colors.RED))
+        return None
+
+def backup_file(file_path: str, backup_dir: str) -> bool:
+    """Creates a backup of a file maintaining directory structure"""
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # Get relative path from script directory
+        rel_path = os.path.relpath(file_path, script_dir)
+        
+        # Create backup file path
+        backup_file_path = os.path.join(backup_dir, rel_path)
+        
+        # Create directories if they don't exist
+        backup_file_dir = os.path.dirname(backup_file_path)
+        os.makedirs(backup_file_dir, exist_ok=True)
+        
+        # Copy the file
+        shutil.copy2(file_path, backup_file_path)
+        
+        return True
+    except Exception as e:
+        print(Colors.colorize(f"⚠️ WARNING: Could not backup {file_path}: {e}", Colors.YELLOW))
+        return False
+
+def ask_for_backup() -> bool:
+    """Asks user if they want to create backups"""
+    print(Colors.colorize("🔒 BACKUP OPTION", Colors.BOLD + Colors.CYAN))
+    print(Colors.colorize("The Console.log Remover will modify your files.", Colors.YELLOW))
+    print(Colors.colorize("It's recommended to create backups before proceeding.", Colors.YELLOW))
+    print()
+    
+    while True:
+        try:
+            response = input(Colors.colorize("Create backups before removing console.logs? (y/n): ", Colors.BOLD + Colors.CYAN)).strip().lower()
+            
+            if response in ['y', 'yes', 'j', 'ja']:
+                return True
+            elif response in ['n', 'no', 'nein']:
+                return False
+            else:
+                print(Colors.colorize("❌ Please answer with 'y' or 'n'.", Colors.RED))
+                
+        except (KeyboardInterrupt, EOFError):
+            return False
+
+def remove_console_logs_from_file(file_path, backup_dir=None):
     """
     Remove console.log statements from JavaScript/TypeScript files
     Handles various console.log patterns while preserving code structure
@@ -22,8 +98,16 @@ def remove_console_logs_from_file(file_path):
                 'original_logs': 0,
                 'removed_logs': 0,
                 'modified': False,
+                'backed_up': False,
                 'error': None
             }
+        
+        # Create backup if backup directory is provided
+        backed_up = False
+        if backup_dir:
+            backed_up = backup_file(file_path, backup_dir)
+            if backed_up:
+                print(Colors.colorize(f"📋 Backed up: {os.path.basename(file_path)}", Colors.GREEN))
         
         # Pattern 1: Simple single-line console.log statements
         # Matches: console.log('message'); or console.log(variable);
@@ -108,6 +192,7 @@ def remove_console_logs_from_file(file_path):
             'removed_logs': removed_count,
             'remaining_logs': remaining_count,
             'modified': modified,
+            'backed_up': backed_up,
             'error': None
         }
         
@@ -118,6 +203,7 @@ def remove_console_logs_from_file(file_path):
             'removed_logs': 0,
             'remaining_logs': 0,
             'modified': False,
+            'backed_up': False,
             'error': str(e)
         }
 
@@ -125,6 +211,19 @@ def scan_and_remove_console_logs():
     """
     Scan all JavaScript and TypeScript files and remove console.log statements
     """
+    # Ask for backup confirmation
+    create_backup = ask_for_backup()
+    
+    # Create backup folder if requested
+    backup_dir = None
+    if create_backup:
+        backup_dir = create_backup_folder()
+        if backup_dir:
+            print(Colors.colorize(f"📁 Backup folder created: {backup_dir}", Colors.GREEN))
+        else:
+            print(Colors.colorize("❌ Failed to create backup folder. Proceeding without backup.", Colors.RED))
+            create_backup = False
+    
     # Get the directory where this script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
@@ -141,14 +240,23 @@ def scan_and_remove_console_logs():
         files = glob.glob(full_pattern, recursive=True)
         all_files.extend(files)
     
-    # Filter out unwanted directories
-    excluded_dirs = ['node_modules', '.git', 'dist', 'build', '.angular', 'coverage', '.vscode', '.idea']
+    # Filter out unwanted directories (including backup folders)
+    excluded_dirs = ['node_modules', '.git', 'dist', 'build', '.angular', 'coverage', '.vscode', '.idea', 'backups']
     files = []
     for file_path in all_files:
         # Check if file contains any excluded directory in its path
         should_exclude = any(excluded_dir in file_path for excluded_dir in excluded_dirs)
         if not should_exclude:
             files.append(file_path)
+    
+    print()
+    print(Colors.colorize("🧹 CONSOLE.LOG REMOVAL ANALYSIS", Colors.BOLD + Colors.CYAN))
+    print(Colors.colorize("=" * 50, Colors.CYAN))
+    print(Colors.colorize(f"📁 Search directory: {script_dir}", Colors.BLUE))
+    print(Colors.colorize(f"📄 JavaScript files: {len([f for f in files if f.endswith('.js')])}", Colors.GREEN))
+    print(Colors.colorize(f"📘 TypeScript files: {len([f for f in files if f.endswith('.ts')])}", Colors.GREEN))
+    print(Colors.colorize(f"🔒 Backup enabled: {'Yes' if create_backup else 'No'}", Colors.YELLOW if create_backup else Colors.RED))
+    print()
     
     # Prepare output content
     output_lines = []
@@ -181,18 +289,21 @@ def scan_and_remove_console_logs():
     total_remaining_logs = 0
     files_modified = 0
     files_with_errors = 0
+    files_backed_up = 0
     files_with_logs = []
     
     for file_path in files:
-        print(f"Processing: {os.path.basename(file_path)}")
-        result = remove_console_logs_from_file(file_path)
+        file_name = os.path.basename(file_path)
+        print(Colors.colorize(f"🔍 Processing: {file_name}", Colors.CYAN))
+        result = remove_console_logs_from_file(file_path, backup_dir)
         
         if result['error']:
             files_with_errors += 1
-            error_msg = f"ERROR processing {file_path}: {result['error']}"
-            print(error_msg)
-            output_lines.append(error_msg)
+            print(Colors.colorize(f"❌ ERROR processing {file_name}: {result['error']}", Colors.RED))
             continue
+        
+        if result['backed_up']:
+            files_backed_up += 1
         
         if result['original_logs'] > 0:
             files_with_logs.append(result)
@@ -202,26 +313,16 @@ def scan_and_remove_console_logs():
             
             if result['modified']:
                 files_modified += 1
-            
-            # Report on this file
-            file_output = f"File: {file_path}"
-            separator = "-" * 80
-            
-            output_lines.append(file_output)
-            output_lines.append(separator)
-            
-            stats = f"  Original console.logs: {result['original_logs']}"
-            removed = f"  Removed: {result['removed_logs']}"
-            remaining = f"  Remaining: {result['remaining_logs']}"
-            status = f"  Status: {'Modified' if result['modified'] else 'No changes needed'}"
-            
-            print(f"  {os.path.basename(file_path)}: {result['original_logs']} -> {result['remaining_logs']} console.logs")
-            
-            output_lines.append(stats)
-            output_lines.append(removed)
-            output_lines.append(remaining)
-            output_lines.append(status)
-            output_lines.append("")
+                print(Colors.colorize(f"  🧹 Removed {result['removed_logs']} console.logs", Colors.GREEN))
+                if result['remaining_logs'] > 0:
+                    print(Colors.colorize(f"  ⚠️ {result['remaining_logs']} console.logs remaining", Colors.YELLOW))
+            else:
+                print(Colors.colorize(f"  ℹ️ {result['original_logs']} console.logs found but couldn't be removed", Colors.BLUE))
+        
+        if result['original_logs'] > 0:
+            files_with_logs.append(result)
+        else:
+            print(Colors.colorize(f"  ✅ No console.logs found", Colors.GREEN))
     
     # Sort files by number of original console.logs (most first)
     files_with_logs.sort(key=lambda x: x['original_logs'], reverse=True)
@@ -267,79 +368,90 @@ def scan_and_remove_console_logs():
         print("")
     
     # Overall summary
-    summary_header = "=== OVERALL SUMMARY ==="
-    files_analyzed = f"Files analyzed: {len(files)}"
-    files_with_logs_count = f"Files with console.logs: {len(files_with_logs)}"
-    files_modified_count = f"Files modified: {files_modified}"
-    files_errors = f"Files with errors: {files_with_errors}"
-    total_logs = f"Total console.logs found: {total_original_logs}"
-    total_removed_msg = f"Total console.logs removed: {total_removed_logs}"
-    total_remaining_msg = f"Total console.logs remaining: {total_remaining_logs}"
+    print(Colors.colorize("\n" + "=" * 60, Colors.YELLOW))
+    print(Colors.colorize("CONSOLE.LOG REMOVAL SUMMARY", Colors.YELLOW))
+    print(Colors.colorize("=" * 60, Colors.YELLOW))
     
-    print(summary_header)
-    print(files_analyzed)
-    print(files_with_logs_count)
-    print(files_modified_count)
-    print(files_errors)
-    print(total_logs)
-    print(total_removed_msg)
-    print(total_remaining_msg)
+    print(Colors.colorize(f"📁 Files analyzed: {len(files)}", Colors.CYAN))
+    print(Colors.colorize(f"🎯 Files with console.logs: {len(files_with_logs)}", Colors.CYAN))
+    print(Colors.colorize(f"✏️ Files modified: {files_modified}", Colors.GREEN if files_modified > 0 else Colors.BLUE))
+    print(Colors.colorize(f"💾 Files backed up: {files_backed_up}", Colors.GREEN if files_backed_up > 0 else Colors.BLUE))
+    print(Colors.colorize(f"❌ Files with errors: {files_with_errors}", Colors.RED if files_with_errors > 0 else Colors.GREEN))
+    print(Colors.colorize(f"📊 Total console.logs found: {total_original_logs}", Colors.BLUE))
+    print(Colors.colorize(f"🧹 Total console.logs removed: {total_removed_logs}", Colors.GREEN))
+    print(Colors.colorize(f"⚠️ Total console.logs remaining: {total_remaining_logs}", Colors.YELLOW if total_remaining_logs > 0 else Colors.GREEN))
     
-    output_lines.append(summary_header)
-    output_lines.append(files_analyzed)
-    output_lines.append(files_with_logs_count)
-    output_lines.append(files_modified_count)
-    output_lines.append(files_errors)
-    output_lines.append(total_logs)
-    output_lines.append(total_removed_msg)
-    output_lines.append(total_remaining_msg)
+    if backup_dir and files_backed_up > 0:
+        print(Colors.colorize(f"💾 Backup location: {backup_dir}", Colors.CYAN))
     
     if total_removed_logs == 0:
-        no_logs_msg = "No console.log statements found to remove!"
-        print(no_logs_msg)
-        output_lines.append(no_logs_msg)
+        print(Colors.colorize("ℹ️ No console.log statements found to remove!", Colors.BLUE))
     else:
         success_rate = (total_removed_logs / total_original_logs) * 100 if total_original_logs > 0 else 0
-        success_msg = f"Removal success rate: {success_rate:.1f}%"
-        print(success_msg)
-        output_lines.append(success_msg)
+        print(Colors.colorize(f"📈 Removal success rate: {success_rate:.1f}%", Colors.GREEN))
         
-        if total_remaining_logs > 0:
-            manual_msg = f"Manual review needed for {len(files_with_remaining)} files with {total_remaining_logs} remaining console.logs"
-            print(manual_msg)
-            output_lines.append(manual_msg)
-        
-        # Recommendations
-        recommendations = [
-            "\n=== RECOMMENDATIONS ===",
-            "• Files with remaining console.logs may have complex patterns that need manual review",
-            "• Check for console.log statements inside template literals or complex expressions",
-            "• Consider using a proper logging library instead of console.log for production code",
-            "• Review removed console.logs in git diff before committing changes",
-            "• Backup your files before running this script on important code"
-        ]
-        
-        for rec in recommendations:
-            print(rec)
-            output_lines.append(rec)
+    if total_remaining_logs > 0:
+        files_with_remaining = [f for f in files_with_logs if f['remaining_logs'] > 0]
+        print(Colors.colorize(f"⚠️ Manual review needed for {len(files_with_remaining)} files with {total_remaining_logs} remaining console.logs", Colors.YELLOW))
     
-    # Write to file
-    output_file = "console_log_removal_report.txt"
+    # Write summary to file
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_file = f"console_log_removal_report_{timestamp}.txt"
+    
+    output_lines = [
+        "CONSOLE.LOG REMOVAL REPORT",
+        "=" * 60,
+        f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        "",
+        f"Files analyzed: {len(files)}",
+        f"Files with console.logs: {len(files_with_logs)}",
+        f"Files modified: {files_modified}",
+        f"Files backed up: {files_backed_up}",
+        f"Files with errors: {files_with_errors}",
+        f"Total console.logs found: {total_original_logs}",
+        f"Total console.logs removed: {total_removed_logs}",
+        f"Total console.logs remaining: {total_remaining_logs}",
+        ""
+    ]
+    
+    if backup_dir and files_backed_up > 0:
+        output_lines.append(f"Backup location: {backup_dir}")
+        output_lines.append("")
+    
+    if total_removed_logs > 0:
+        success_rate = (total_removed_logs / total_original_logs) * 100
+        output_lines.append(f"Removal success rate: {success_rate:.1f}%")
+        output_lines.append("")
+    
+    # Add detailed file information
+    if files_with_logs:
+        output_lines.append("DETAILED FILE RESULTS:")
+        output_lines.append("-" * 40)
+        for result in sorted(files_with_logs, key=lambda x: x['original_logs'], reverse=True):
+            output_lines.append(f"File: {result['file']}")
+            output_lines.append(f"  Original: {result['original_logs']}, Removed: {result['removed_logs']}, Remaining: {result['remaining_logs']}")
+            output_lines.append(f"  Status: {'Modified' if result['modified'] else 'No changes needed'}")
+            if result['backed_up']:
+                output_lines.append(f"  Backup: Created")
+            output_lines.append("")
     try:
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write('\n'.join(output_lines))
-        print(f"\nResults saved to: {output_file}")
+        print(Colors.colorize(f"\n💾 Report saved to: {output_file}", Colors.CYAN))
     except Exception as e:
-        print(f"\nError saving to file: {e}")
+        print(Colors.colorize(f"\n❌ Error saving report: {e}", Colors.RED))
 
 if __name__ == "__main__":
-    print("🚀 Starting console.log removal process...")
-    print("⚠️  WARNING: This will modify your files! Make sure you have backups.")
+    print(Colors.colorize("🚀 Console.log Removal Tool", Colors.CYAN))
+    print(Colors.colorize("=" * 40, Colors.CYAN))
+    print(Colors.colorize("⚠️  WARNING: This will modify your files!", Colors.YELLOW))
+    print(Colors.colorize("📁 Make sure you have backups or use the backup feature.", Colors.YELLOW))
+    print()
     
     # Ask for confirmation
-    response = input("Do you want to proceed? (y/N): ").strip().lower()
+    response = input(Colors.colorize("Do you want to proceed? (y/N): ", Colors.CYAN)).strip().lower()
     if response in ['y', 'yes']:
         scan_and_remove_console_logs()
-        print("✅ Console.log removal completed!")
+        print(Colors.colorize("\n✅ Console.log removal process completed!", Colors.GREEN))
     else:
-        print("❌ Operation cancelled.")
+        print(Colors.colorize("❌ Operation cancelled.", Colors.RED))
