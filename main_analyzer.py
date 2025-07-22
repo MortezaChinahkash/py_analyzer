@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
 Main Analyzer Controller
-Zentrale Steuerung für alle Code-Analyse-Tools
+Central control for all code analysis tools
 """
 import os
 import sys
 import subprocess
 from typing import Dict, List
 
-# ANSI Color Codes für farbige Ausgabe
+# ANSI Color Codes for colored output
 class Colors:
     # Text Colors
     RED = '\033[91m'
@@ -35,29 +35,29 @@ class Colors:
     
     @staticmethod
     def colorize(text: str, color: str) -> str:
-        """Färbt Text ein"""
+        """Colors text"""
         return f"{color}{text}{Colors.RESET}"
 
 def print_header():
-    """Zeigt den Hauptheader an"""
+    """Shows the main header"""
     print(Colors.colorize("=" * 80, Colors.CYAN))
     print(Colors.colorize("🔍 CODE ANALYZER SUITE 🔍", Colors.BOLD + Colors.CYAN))
-    print(Colors.colorize("Professionelle Code-Analyse-Tools", Colors.CYAN))
+    print(Colors.colorize("Professional Code Analysis Tools", Colors.CYAN))
     print(Colors.colorize("=" * 80, Colors.CYAN))
     print()
 
 def print_menu():
-    """Zeigt das Hauptmenü an"""
+    """Shows the main menu"""
     menu_items = [
-        ("1", "📏 File Length Analyzer", "Analysiert Dateilängen (HTML, CSS, JS, TS)", "analyze_file_length.py"),
-        ("2", "📝 JSDoc Coverage Analyzer", "Prüft JSDoc-Dokumentation in JS/TS", "analyze_jsdoc_coverage.py"),
-        ("3", "🔧 Method Length Analyzer", "Analysiert Methodenlängen in JS/TS", "analyze_method_length_simple.py"),
-        ("4", "🧹 Console.log Remover", "Entfernt console.log Statements", "remove_console_logs.py"),
-        ("5", "🚀 Alle Analyzer ausführen", "Führt alle Analyzer nacheinander aus", "all"),
-        ("0", "❌ Beenden", "Programm verlassen", "exit")
+        ("1", "📏 File Length Analyzer", "Analyzes file lengths (HTML, CSS, JS, TS)", "analyze_file_length.py"),
+        ("2", "📝 JSDoc Coverage Analyzer", "Checks JSDoc documentation in JS/TS", "analyze_jsdoc_coverage.py"),
+        ("3", "🔧 Method Length Analyzer", "Analyzes method lengths in JS/TS", "analyze_method_length_simple.py"),
+        ("4", "🧹 Console.log Remover", "Removes console.log statements", "remove_console_logs.py"),
+        ("5", "🚀 Run All Analyzers", "Executes all analyzers sequentially", "all"),
+        ("0", "❌ Exit", "Exit program", "exit")
     ]
     
-    print(Colors.colorize("📋 VERFÜGBARE ANALYZER:", Colors.BOLD + Colors.YELLOW))
+    print(Colors.colorize("📋 AVAILABLE ANALYZERS:", Colors.BOLD + Colors.YELLOW))
     print()
     
     for number, title, description, _ in menu_items:
@@ -65,55 +65,55 @@ def print_menu():
         print(f"    {Colors.colorize(description, Colors.BLUE)}")
         print()
     
-    print(Colors.colorize("💡 TIPP:", Colors.BOLD + Colors.CYAN))
-    print(Colors.colorize("• Einzelauswahl: z.B. '1' oder '3'", Colors.CYAN))
-    print(Colors.colorize("• Mehrfachauswahl: z.B. '1,2,4' (mit Komma getrennt)", Colors.CYAN))
-    print(Colors.colorize("• Alle ausführen: '5'", Colors.CYAN))
+    print(Colors.colorize("💡 TIP:", Colors.BOLD + Colors.CYAN))
+    print(Colors.colorize("• Single selection: e.g. '1' or '3'", Colors.CYAN))
+    print(Colors.colorize("• Multiple selection: e.g. '1,2,4' (comma separated)", Colors.CYAN))
+    print(Colors.colorize("• Run all: '5'", Colors.CYAN))
     print()
 
 def get_analyzer_info() -> Dict[str, Dict]:
-    """Gibt Informationen über alle verfügbaren Analyzer zurück"""
+    """Returns information about all available analyzers"""
     return {
         "1": {
             "name": "File Length Analyzer",
             "script": "analyze_file_length.py",
-            "description": "Analysiert Dateilängen und findet Dateien > 400 Zeilen",
+            "description": "Analyzes file lengths and finds files > 400 lines",
             "icon": "📏"
         },
         "2": {
             "name": "JSDoc Coverage Analyzer", 
             "script": "analyze_jsdoc_coverage.py",
-            "description": "Prüft JSDoc-Dokumentation in JavaScript/TypeScript",
+            "description": "Checks JSDoc documentation in JavaScript/TypeScript",
             "icon": "📝"
         },
         "3": {
             "name": "Method Length Analyzer",
             "script": "analyze_method_length_simple.py", 
-            "description": "Analysiert Methodenlängen in JavaScript/TypeScript",
+            "description": "Analyzes method lengths in JavaScript/TypeScript",
             "icon": "🔧"
         },
         "4": {
             "name": "Console.log Remover",
             "script": "remove_console_logs.py",
-            "description": "Entfernt console.log Statements aus JS/TS Dateien",
+            "description": "Removes console.log statements from JS/TS files",
             "icon": "🧹"
         }
     }
 
 def run_analyzer(script_name: str) -> bool:
-    """Führt einen spezifischen Analyzer aus"""
+    """Executes a specific analyzer"""
     script_dir = os.path.dirname(os.path.abspath(__file__))
     script_path = os.path.join(script_dir, script_name)
     
     if not os.path.exists(script_path):
-        print(Colors.colorize(f"❌ FEHLER: Script {script_name} nicht gefunden!", Colors.RED))
+        print(Colors.colorize(f"❌ ERROR: Script {script_name} not found!", Colors.RED))
         return False
     
     try:
-        print(Colors.colorize(f"🚀 Starte {script_name}...", Colors.GREEN))
+        print(Colors.colorize(f"🚀 Starting {script_name}...", Colors.GREEN))
         print(Colors.colorize("-" * 60, Colors.YELLOW))
         
-        # Script ausführen
+        # Execute script
         result = subprocess.run([sys.executable, script_path], 
                               cwd=script_dir,
                               capture_output=False,
@@ -122,21 +122,21 @@ def run_analyzer(script_name: str) -> bool:
         print(Colors.colorize("-" * 60, Colors.YELLOW))
         
         if result.returncode == 0:
-            print(Colors.colorize(f"✅ {script_name} erfolgreich abgeschlossen!", Colors.GREEN))
+            print(Colors.colorize(f"✅ {script_name} completed successfully!", Colors.GREEN))
         else:
-            print(Colors.colorize(f"⚠️ {script_name} mit Fehlern beendet (Exit Code: {result.returncode})", Colors.YELLOW))
+            print(Colors.colorize(f"⚠️ {script_name} finished with errors (Exit Code: {result.returncode})", Colors.YELLOW))
         
         return result.returncode == 0
         
     except Exception as e:
-        print(Colors.colorize(f"❌ FEHLER beim Ausführen von {script_name}: {e}", Colors.RED))
+        print(Colors.colorize(f"❌ ERROR executing {script_name}: {e}", Colors.RED))
         return False
 
 def run_all_analyzers() -> None:
-    """Führt alle Analyzer nacheinander aus"""
+    """Executes all analyzers sequentially"""
     analyzers = get_analyzer_info()
     
-    print(Colors.colorize("🚀 ALLE ANALYZER WERDEN AUSGEFÜHRT", Colors.BOLD + Colors.MAGENTA))
+    print(Colors.colorize("🚀 ALL ANALYZERS WILL BE EXECUTED", Colors.BOLD + Colors.MAGENTA))
     print(Colors.colorize("=" * 50, Colors.MAGENTA))
     print()
     
@@ -154,26 +154,26 @@ def run_all_analyzers() -> None:
         print(Colors.colorize("=" * 50, Colors.YELLOW))
         print()
     
-    # Zusammenfassung
-    print(Colors.colorize("📊 ZUSAMMENFASSUNG ALLER ANALYZER", Colors.BOLD + Colors.MAGENTA))
+    # Summary
+    print(Colors.colorize("📊 SUMMARY OF ALL ANALYZERS", Colors.BOLD + Colors.MAGENTA))
     print(Colors.colorize("=" * 50, Colors.MAGENTA))
     
     for name, success in results:
-        status = "✅ Erfolgreich" if success else "❌ Fehler"
+        status = "✅ Successful" if success else "❌ Error"
         color = Colors.GREEN if success else Colors.RED
         print(f"{Colors.colorize(status, color)} - {name}")
     
     print()
 
 def run_multiple_analyzers(choices: List[str]) -> None:
-    """Führt mehrere ausgewählte Analyzer nacheinander aus"""
+    """Executes multiple selected analyzers sequentially"""
     analyzers = get_analyzer_info()
     
-    print(Colors.colorize(f"🔥 MEHRFACHAUSWAHL: {len(choices)} ANALYZER WERDEN AUSGEFÜHRT", Colors.BOLD + Colors.MAGENTA))
+    print(Colors.colorize(f"🔥 MULTIPLE SELECTION: {len(choices)} ANALYZERS WILL BE EXECUTED", Colors.BOLD + Colors.MAGENTA))
     print(Colors.colorize("=" * 60, Colors.MAGENTA))
     print()
     
-    # Zeige alle ausgewählten Analyzer an
+    # Show all selected analyzers
     for choice in choices:
         info = analyzers[choice]
         print(f"{Colors.colorize(choice, Colors.BOLD + Colors.GREEN)} - {Colors.colorize(info['name'], Colors.CYAN)}")
@@ -191,84 +191,84 @@ def run_multiple_analyzers(choices: List[str]) -> None:
         success = run_analyzer(info['script'])
         results.append((info['name'], success))
         
-        # Trennlinie zwischen Analyzern (außer beim letzten)
+        # Separator between analyzers (except for the last one)
         if i < len(choices):
             print()
             print(Colors.colorize("=" * 60, Colors.YELLOW))
             print()
     
-    # Zusammenfassung
+    # Summary
     print()
-    print(Colors.colorize("📊 ZUSAMMENFASSUNG MEHRFACHAUSWAHL", Colors.BOLD + Colors.MAGENTA))
+    print(Colors.colorize("📊 MULTIPLE SELECTION SUMMARY", Colors.BOLD + Colors.MAGENTA))
     print(Colors.colorize("=" * 60, Colors.MAGENTA))
     
     for name, success in results:
-        status = "✅ Erfolgreich" if success else "❌ Fehler"
+        status = "✅ Successful" if success else "❌ Error"
         color = Colors.GREEN if success else Colors.RED
         print(f"{Colors.colorize(status, color)} - {name}")
     
     print()
 
 def get_user_choice() -> str:
-    """Fragt den Benutzer nach seiner Auswahl"""
+    """Asks the user for their selection"""
     while True:
         try:
-            choice = input(Colors.colorize("🔍 Ihre Auswahl (0-5 oder mehrere mit Komma): ", Colors.BOLD + Colors.YELLOW)).strip()
+            choice = input(Colors.colorize("🔍 Your selection (0-5 or multiple with comma): ", Colors.BOLD + Colors.YELLOW)).strip()
             
-            # Einzelauswahl
+            # Single selection
             if choice in ['0', '1', '2', '3', '4', '5']:
                 return choice
             
-            # Mehrfachauswahl prüfen
+            # Check multiple selection
             if ',' in choice:
                 choices = [c.strip() for c in choice.split(',')]
                 valid_choices = ['1', '2', '3', '4']
                 
-                # Prüfen ob alle Auswahlen gültig sind
+                # Check if all selections are valid
                 if all(c in valid_choices for c in choices):
-                    # Duplikate entfernen und sortieren
+                    # Remove duplicates and sort
                     unique_choices = sorted(list(set(choices)))
                     return ','.join(unique_choices)
                 else:
-                    print(Colors.colorize("❌ Ungültige Mehrfachauswahl! Nur 1,2,3,4 erlaubt (keine 0 oder 5).", Colors.RED))
+                    print(Colors.colorize("❌ Invalid multiple selection! Only 1,2,3,4 allowed (no 0 or 5).", Colors.RED))
             else:
-                print(Colors.colorize("❌ Ungültige Eingabe! Bitte wählen Sie 0-5 oder mehrere mit Komma.", Colors.RED))
+                print(Colors.colorize("❌ Invalid input! Please choose 0-5 or multiple with comma.", Colors.RED))
                 
         except KeyboardInterrupt:
-            print(Colors.colorize("\n\n👋 Auf Wiedersehen!", Colors.YELLOW))
+            print(Colors.colorize("\n\nGoodbye!", Colors.YELLOW))
             sys.exit(0)
         except EOFError:
-            print(Colors.colorize("\n\n👋 Auf Wiedersehen!", Colors.YELLOW))
+            print(Colors.colorize("\n\nGoodbye!", Colors.YELLOW))
             sys.exit(0)
 
 def confirm_action(analyzer_name: str) -> bool:
-    """Fragt nach Bestätigung für die Ausführung"""
-    print(Colors.colorize(f"⚠️ Sie sind dabei, '{analyzer_name}' auszuführen.", Colors.YELLOW))
+    """Asks for confirmation before execution"""
+    print(Colors.colorize(f"⚠️ You are about to run '{analyzer_name}'.", Colors.YELLOW))
     
-    # Spezielle Warnung für Console.log Remover
+    # Special warning for Console.log Remover
     if "Console.log Remover" in analyzer_name:
-        print(Colors.colorize("🚨 WARNUNG: Dieser Analyzer VERÄNDERT Ihre Dateien!", Colors.RED))
-        print(Colors.colorize("   Stellen Sie sicher, dass Sie Backups haben.", Colors.RED))
+        print(Colors.colorize("🚨 WARNING: This analyzer MODIFIES your files!", Colors.RED))
+        print(Colors.colorize("   Make sure you have backups.", Colors.RED))
     
     while True:
         try:
-            response = input(Colors.colorize("Fortfahren? (j/J für Ja, n/N für Nein): ", Colors.BOLD + Colors.CYAN)).strip().lower()
+            response = input(Colors.colorize("Continue? (y/Y for Yes, n/N for No): ", Colors.BOLD + Colors.CYAN)).strip().lower()
             
-            if response in ['j', 'ja', 'y', 'yes']:
+            if response in ['y', 'yes', 'j', 'ja']:
                 return True
-            elif response in ['n', 'nein', 'no']:
+            elif response in ['n', 'no', 'nein']:
                 return False
             else:
-                print(Colors.colorize("❌ Bitte antworten Sie mit 'j' oder 'n'.", Colors.RED))
+                print(Colors.colorize("❌ Please answer with 'y' or 'n'.", Colors.RED))
                 
         except (KeyboardInterrupt, EOFError):
             return False
 
 def main():
-    """Hauptfunktion"""
+    """Main function"""
     try:
         while True:
-            # Bildschirm leeren (funktioniert auf Windows und Unix)
+            # Clear screen (works on Windows and Unix)
             os.system('cls' if os.name == 'nt' else 'clear')
             
             print_header()
@@ -277,37 +277,37 @@ def main():
             choice = get_user_choice()
             
             if choice == '0':
-                print(Colors.colorize("\n👋 Auf Wiedersehen!", Colors.YELLOW))
+                print(Colors.colorize("\n👋 Goodbye!", Colors.YELLOW))
                 break
                 
             elif choice == '5':
                 print()
-                if confirm_action("ALLE ANALYZER"):
+                if confirm_action("ALL ANALYZERS"):
                     print()
                     run_all_analyzers()
                 else:
-                    print(Colors.colorize("❌ Vorgang abgebrochen.", Colors.YELLOW))
+                    print(Colors.colorize("❌ Operation cancelled.", Colors.YELLOW))
                     
             elif ',' in choice:
-                # Mehrfachauswahl
+                # Multiple selection
                 choices = choice.split(',')
                 analyzers = get_analyzer_info()
                 
-                # Zeige alle ausgewählten Analyzer an
+                # Show all selected analyzers
                 print()
-                print(Colors.colorize("🔥 MEHRFACHAUSWAHL:", Colors.BOLD + Colors.CYAN))
+                print(Colors.colorize("🔥 MULTIPLE SELECTION:", Colors.BOLD + Colors.CYAN))
                 for c in choices:
                     print(f"  {c} - {analyzers[c]['name']}")
                 print()
                 
-                if confirm_action(f"{len(choices)} ANALYZER"):
+                if confirm_action(f"{len(choices)} ANALYZERS"):
                     print()
                     run_multiple_analyzers(choices)
                 else:
-                    print(Colors.colorize("❌ Vorgang abgebrochen.", Colors.YELLOW))
+                    print(Colors.colorize("❌ Operation cancelled.", Colors.YELLOW))
                     
             else:
-                # Einzelauswahl
+                # Single selection
                 analyzers = get_analyzer_info()
                 analyzer_info = analyzers[choice]
                 
@@ -316,16 +316,16 @@ def main():
                     print()
                     run_analyzer(analyzer_info['script'])
                 else:
-                    print(Colors.colorize("❌ Vorgang abgebrochen.", Colors.YELLOW))
+                    print(Colors.colorize("❌ Operation cancelled.", Colors.YELLOW))
             
-            # Warten auf Benutzereingabe
+            # Wait for user input
             print()
-            input(Colors.colorize("📝 Drücken Sie Enter, um fortzufahren...", Colors.BOLD + Colors.GREEN))
+            input(Colors.colorize("📝 Press Enter to continue...", Colors.BOLD + Colors.GREEN))
     
     except KeyboardInterrupt:
-        print(Colors.colorize("\n\n👋 Programm durch Benutzer beendet.", Colors.YELLOW))
+        print(Colors.colorize("\n\n👋 Program terminated by user.", Colors.YELLOW))
     except Exception as e:
-        print(Colors.colorize(f"\n❌ Unerwarteter Fehler: {e}", Colors.RED))
+        print(Colors.colorize(f"\n❌ Unexpected error: {e}", Colors.RED))
 
 if __name__ == "__main__":
     main()
